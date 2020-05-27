@@ -1,0 +1,16 @@
+{
+    "id": 1,
+    "name":"macbookair",
+    "subCategory": {
+      "id":1,
+      "name":"laptop",
+      "category":{
+        "id":2,
+        "name":"mobile and Laptop"
+      }
+    },
+    "brand":"apple",
+    "price":70000,
+    "product_code":1122
+}
+
