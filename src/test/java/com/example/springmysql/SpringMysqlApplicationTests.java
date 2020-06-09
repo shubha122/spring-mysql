@@ -1,5 +1,6 @@
 package com.example.springmysql;
 
+import com.example.springmysql.controller.UserController;
 import com.example.springmysql.dao.ProductDao;
 import com.example.springmysql.dao.UserDao;
 import com.example.springmysql.model.Product;
@@ -50,12 +51,13 @@ public class SpringMysqlApplicationTests {
 	private ProductDao productDao;
 
 	ObjectMapper om = new ObjectMapper();
+
 	@Before
-	public void setUp(){
-		mockMvc= MockMvcBuilders.webAppContextSetup(context).build();
+	public void setUp() {
+		mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
 	}
 
-
+//created user
 	@Test
 	public void createUserTest() throws Exception {
 		User user = new User();
@@ -69,7 +71,7 @@ public class SpringMysqlApplicationTests {
 		user.setGender("F");
 		user.setPassword("123");
 		//List<User> expectedUsers = new ArrayList<>();
-		User expectedUser = new User(9, user.getFname(), user.getLname(), user.getEmail(),user.getGender(),user.getPassword(),user.getCountry(),user.getCity());
+		User expectedUser = new User(9, user.getFname(), user.getLname(), user.getEmail(), user.getGender(), user.getPassword(), user.getCountry(), user.getCity());
 		//expectedUsers.add(u1);
 		String jsonRequest = om.writeValueAsString(user);
 		String jsonResponse = om.writeValueAsString(expectedUser);
@@ -79,82 +81,84 @@ public class SpringMysqlApplicationTests {
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andReturn();
 		String resultContent = result.getResponse().getContentAsString();
-		Assert.assertEquals(jsonResponse,resultContent);
+		Assert.assertEquals(jsonResponse, resultContent);
 	}
 
-
-@Test
+//Passed wrong email format and expecting 400 status
+	@Test
 	public void createUserValidationTest() throws Exception {
-	User user = new User();
-	user.setFname("Ivy");
-	user.setLname("Chris");
-	user.setCity("jaipur");
-	user.setCountry("india");
-	user.setEmail("Ivy");
-	user.setGender("F");
-	user.setPassword("123");
-	String jsonRequest = om.writeValueAsString(user);
-	MockHttpServletResponse response= mockMvc.perform(post("/user/createUser").content(jsonRequest)
-			.contentType(MediaType.APPLICATION_JSON)).andReturn()
-			.getResponse();
-	Assert.assertEquals(400,response.getStatus());
+		User user = new User();
+		user.setFname("Ivy");
+		user.setLname("Chris");
+		user.setCity("jaipur");
+		user.setCountry("india");
+		user.setEmail("Ivy");
+		user.setGender("F");
+		user.setPassword("123");
+		String jsonRequest = om.writeValueAsString(user);
+		MockHttpServletResponse response = mockMvc.perform(post("/user/createUser").content(jsonRequest)
+				.contentType(MediaType.APPLICATION_JSON)).andReturn()
+				.getResponse();
+		Assert.assertEquals(400, response.getStatus());
 	}
-
+//get all the users list
 	@Test
 	public void getUserFindAllTest() throws Exception {
 		List<User> expectedUsers = new ArrayList<>();
-		User u1 = new User(9,"emi","jain", "tom@gmail.com","F","123","india","pune");
+		User u1 = new User(9, "emi", "jain", "tom@gmail.com", "F", "123", "india", "pune");
 		expectedUsers.add(u1);
 		String jsonResponse = om.writeValueAsString(expectedUsers);
 		given(userDao.findAll()).willReturn(expectedUsers);
 		MvcResult result = mockMvc.perform(get("/user/getUsers"))
 				.andExpect(status().isOk()).andReturn();
 		String resultContent = result.getResponse().getContentAsString();
-		Assert.assertEquals(jsonResponse,resultContent);
+		Assert.assertEquals(jsonResponse, resultContent);
 	}
+///get user by gender
 	@Test
 	public void getUserFindByGenderTest() throws Exception {
 		List<User> expectedUsers = new ArrayList<>();
-		User u1 = new User(9,"jon","jain", "jon@gmail.com","M","123","india","bangalore");
+		User u1 = new User(9, "jon", "jain", "jon@gmail.com", "M", "123", "india", "bangalore");
 		expectedUsers.add(u1);
 		String jsonResponse = om.writeValueAsString(expectedUsers);
 		when(userDao.findByGender(anyString())).thenReturn(expectedUsers);
-		System.out.println("json response "+expectedUsers);
+		System.out.println("json response " + expectedUsers);
 		MvcResult result = mockMvc.perform(get("/user/getUsers?gender=M"))
 				.andExpect(status().isOk()).andReturn();
 		String resultContent = result.getResponse().getContentAsString();
-		Assert.assertEquals(jsonResponse,resultContent);
+		Assert.assertEquals(jsonResponse, resultContent);
 	}
-
+//updating user first name
 	@Test
 	public void updateUserTest() throws Exception {
-		UpdateUserRequest req = new	 UpdateUserRequest();
+		UpdateUserRequest req = new UpdateUserRequest();
 		req.setFname("Taru");
 		String jsonRequest = om.writeValueAsString(req);
 		int userId = 28;
-		User expectedUser = new User(userId,req.getFname(),"jain","taru@gmail.com","M","111","india","jaipur");
+		User expectedUser = new User(userId, req.getFname(), "jain", "taru@gmail.com", "M", "111", "india", "jaipur");
 		String jsonResponse = om.writeValueAsString(expectedUser);
 		when(userDao.findById(userId)).thenReturn(expectedUser);
 		MvcResult result = mockMvc.perform(put("/user/updateUser/" + userId).content(jsonRequest).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andReturn();
 		String resultContent = result.getResponse().getContentAsString();
-				Assert.assertEquals(jsonResponse,resultContent);
+		Assert.assertEquals(jsonResponse, resultContent);
 	}
+//trying to update the user who is not available then expecting 404 status
 	@Test
 	public void updateUserNullTest() throws Exception {
 
-		UpdateUserRequest req = new	 UpdateUserRequest();
+		UpdateUserRequest req = new UpdateUserRequest();
 		req.setLname("Taru");
 		String jsonRequest = om.writeValueAsString(req);
 		int userId = 29;
-		User expectedUser = new User(userId,"shu",req.getLname(),"abhay@gmail.com","M","111","india","jaipur");
+		User expectedUser = new User(userId, "shu", req.getLname(), "abhay@gmail.com", "M", "111", "india", "jaipur");
 		when(userDao.findById(userId)).thenReturn(null);
 		MockHttpServletResponse response = mockMvc.perform(put("/user/updateUser/" + userId).content(jsonRequest)
-		.contentType(MediaType.APPLICATION_JSON))
-			.andReturn().getResponse();
-	Assert.assertEquals(404,response.getStatus());
+				.contentType(MediaType.APPLICATION_JSON))
+				.andReturn().getResponse();
+		Assert.assertEquals(404, response.getStatus());
 	}
-
+//get product list
 	@Test
 	public void getProductTest() throws Exception {
 		List<Product> products = new ArrayList<>();
@@ -163,23 +167,41 @@ public class SpringMysqlApplicationTests {
 		String jsonResponse = om.writeValueAsString(products);
 		int subcategory_id = product.getSubCategory().getId();
 		String brand = product.getBrand();
-		when(productDao.findBySubCategoryIdAndBrand(subcategory_id,brand)).thenReturn(products);
-		MvcResult result = mockMvc.perform(get("/product/getProducts?subcategory_id="+subcategory_id+"&brand="+brand))
+		when(productDao.findBySubCategoryIdAndBrand(subcategory_id, brand)).thenReturn(products);
+		MvcResult result = mockMvc.perform(get("/product/getProducts?subcategory_id=" + subcategory_id + "&brand=" + brand))
 				.andExpect(status().isOk()).andReturn();
 		String resultContent = result.getResponse().getContentAsString();
-		Assert.assertEquals(jsonResponse,resultContent);
+		Assert.assertEquals(jsonResponse, resultContent);
 	}
-
+//uploading JSON from a json file available in resources folder
 	public Product loadProduct(String name) {
 		ObjectMapper mapper = new ObjectMapper();
 		Product product = new Product();
-		TypeReference<Product> typeReference = new TypeReference<Product>(){};
+		TypeReference<Product> typeReference = new TypeReference<Product>() {
+		};
 		InputStream inputStream = this.getClass().getResourceAsStream(name);
 		try {
-			product = mapper.readValue(inputStream,typeReference);
-		} catch (IOException e){
+			product = mapper.readValue(inputStream, typeReference);
+		} catch (IOException e) {
 			System.out.println("exception in reading json" + e.getMessage());
 		}
 		return product;
 	}
+//	@Test
+//	public void calculation1Test(){
+//		UserController user = new UserController();
+//		float result = user.calculation(2,3,4);
+//		System.out.println("result is "+ result);
+//		Assert.assertEquals(20.0,result,0.0002);
+//
+//	}
+//	@Test
+//	public void calculation2Test(){
+//		UserController user = new UserController();
+//		float result = user.calculation(0,1,2);
+//		System.out.println("result is "+ result);
+//		Assert.assertEquals(true,Float.isInfinite(result));
+//
+//	}
+
 }
